@@ -21,31 +21,11 @@ body {
   align-items: center;
 }
 
-.header h2 {
-  margin: 0;
-}
-
-/* STATUS BAR */
-.status {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: #0f172a;
-}
-
-.card {
-  flex: 1;
-  padding: 10px;
-  background: #1e293b;
-  border-radius: 8px;
-  text-align: center;
-}
-
-/* MAIN GRID */
+/* MAIN LAYOUT */
 .container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  height: calc(100vh - 120px);
+  grid-template-columns: 260px 1fr 300px;
+  height: calc(100vh - 60px);
 }
 
 /* PANELS */
@@ -61,16 +41,16 @@ body {
 
 /* ALERTS */
 .alert {
-  background: #7f1d1d;
   padding: 8px;
   margin-bottom: 8px;
   border-radius: 6px;
   cursor: pointer;
+  background: #7f1d1d;
 }
 
 /* CHAT */
 .chat-box {
-  height: 80%;
+  height: 75%;
   overflow-y: auto;
   background: #020617;
   padding: 10px;
@@ -100,6 +80,173 @@ body {
 
 .input-box button {
   padding: 10px;
+  background: #22c55e;
+  border: none;
+  cursor: pointer;
+}
+
+/* QUICK ACTIONS */
+.quick-actions {
+  margin-bottom: 10px;
+}
+
+.quick-actions button {
+  margin-right: 5px;
+  padding: 6px;
+  background: #1e293b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-box {
+    height: 50vh;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>⚡ KDebug AI</h2>
+  <span>Cluster: Connected</span>
+</div>
+
+<div class="container">
+
+  <!-- ALERTS -->
+  <div class="panel">
+    <h3>🚨 Alerts</h3>
+    <div id="alerts"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="panel">
+    <h3>🤖 SRE Assistant</h3>
+
+    <div class="quick-actions">
+      <button onclick="quick('list pods')">Pods</button>
+      <button onclick="quick('debug')">Debug</button>
+      <button onclick="quick('fix')">Fix</button>
+    </div>
+
+    <div id="chat" class="chat-box"></div>
+
+    <div class="input-box">
+      <input id="msg" placeholder="Ask SRE AI..." />
+      <button onclick="send()">Send</button>
+    </div>
+  </div>
+
+  <!-- DETAILS -->
+  <div class="panel">
+    <h3>🔍 Resource Details</h3>
+    <pre id="details"></pre>
+  </div>
+
+</div>
+
+<script>
+const SERVER = "http://<KDEBUG-SVC-FQDN>";
+
+/* ---------------- ALERTS ---------------- */
+async function loadAlerts() {
+  try {
+    const res = await fetch(SERVER + "/events");
+    const data = await res.json();
+
+    const alertsDiv = document.getElementById("alerts");
+    alertsDiv.innerHTML = "";
+
+    data.forEach(a => {
+      const div = document.createElement("div");
+      div.className = "alert";
+
+      // severity color
+      if (a.reason.includes("BackOff")) div.style.background = "#78350f";
+
+      div.innerText = `${a.type} | ${a.namespace}/${a.name} → ${a.reason}`;
+
+      div.onclick = () => {
+        document.getElementById("details").innerText =
+          JSON.stringify(a, null, 2);
+
+        // auto debug on click
+        document.getElementById("msg").value =
+          `debug ${a.type} ${a.name} in ${a.namespace}`;
+        send();
+      };
+
+      alertsDiv.appendChild(div);
+    });
+
+  } catch (e) {}
+}
+
+setInterval(loadAlerts, 3000);
+
+/* ---------------- CHAT ---------------- */
+async function send() {
+  const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  // user message
+  const userDiv = document.createElement("div");
+  userDiv.className = "msg user";
+  userDiv.innerText = "> " + text;
+  chat.appendChild(userDiv);
+
+  input.value = "";
+
+  try {
+    const res = await fetch(SERVER + "/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        session: "ui",
+        message: text
+      })
+    });
+
+    const data = await res.json();
+
+    // AI message SAFE (no HTML injection)
+    const aiDiv = document.createElement("div");
+    aiDiv.className = "msg ai";
+    aiDiv.innerText = data.reply;
+    chat.appendChild(aiDiv);
+
+    chat.scrollTop = chat.scrollHeight;
+
+  } catch (e) {
+    const errDiv = document.createElement("div");
+    errDiv.className = "msg ai";
+    errDiv.innerText = "❌ Server error";
+    chat.appendChild(errDiv);
+  }
+}
+
+/* ---------------- QUICK ---------------- */
+function quick(cmd) {
+  document.getElementById("msg").value = cmd;
+  send();
+}
+</script>
+
+</body>
+</html>  padding: 10px;
   background: #22c55e;
   border: none;
   cursor: pointer;
