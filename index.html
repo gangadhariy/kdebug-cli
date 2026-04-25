@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,59 +8,30 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
   background: #0b1220;
-  color: #e2e8f0;
+  color: white;
+  font-family: Arial;
 }
 
-/* HEADER */
 .header {
-  padding: 12px;
+  padding: 10px;
   background: #111827;
-  border-bottom: 1px solid #1f2937;
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
 }
 
-/* GRID */
 .container {
   display: grid;
-  grid-template-columns: 260px 1fr 300px;
-  height: calc(100vh - 50px);
+  grid-template-columns: 250px 1fr 300px;
+  height: calc(100vh - 40px);
 }
 
-/* PANELS */
 .panel {
   border-right: 1px solid #1f2937;
   padding: 10px;
   overflow-y: auto;
 }
 
-.panel:last-child {
-  border-right: none;
-}
-
-.panel h3 {
-  margin-top: 0;
-  font-size: 14px;
-  color: #94a3b8;
-}
-
-/* ALERT */
-.alert {
-  background: #1e293b;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.alert:hover {
-  background: #334155;
-}
-
-/* CHAT */
 .chat {
   display: flex;
   flex-direction: column;
@@ -73,51 +44,26 @@ body {
 }
 
 .msg {
-  padding: 8px;
+  padding: 6px;
   margin-bottom: 6px;
-  border-radius: 6px;
 }
 
-.user {
-  background: #2563eb;
-  align-self: flex-end;
-}
+.user { background: #2563eb; }
+.bot { background: #1e293b; }
 
-.bot {
-  background: #1e293b;
-}
-
-/* INPUT */
 .input-box {
   display: flex;
-  margin-top: 10px;
 }
 
 input {
   flex: 1;
-  padding: 8px;
-  background: #111827;
-  border: 1px solid #1f2937;
-  color: white;
+  padding: 6px;
 }
 
 button {
-  padding: 8px 12px;
-  background: #22c55e;
+  background: green;
+  color: white;
   border: none;
-  cursor: pointer;
-}
-
-/* MOBILE FIX */
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-
-  .panel {
-    border-right: none;
-    border-bottom: 1px solid #1f2937;
-  }
 }
 </style>
 </head>
@@ -125,32 +71,28 @@ button {
 <body>
 
 <div class="header">
-  ⚡ KDebug AI
-  <span id="status">Cluster: Connecting...</span>
+  KDebug AI
+  <span id="status">Connecting...</span>
 </div>
 
 <div class="container">
 
-  <!-- ALERTS -->
   <div class="panel">
-    <h3>🚨 Alerts</h3>
+    <h3>Alerts</h3>
     <div id="alerts"></div>
   </div>
 
-  <!-- CHAT -->
   <div class="panel chat">
-    <h3>🤖 SRE Assistant</h3>
     <div id="chat" class="messages"></div>
 
     <div class="input-box">
-      <input id="msg" placeholder="Ask SRE AI..." />
+      <input id="msg">
       <button onclick="send()">Send</button>
     </div>
   </div>
 
-  <!-- DETAILS -->
   <div class="panel">
-    <h3>🔍 Resource Details</h3>
+    <h3>Details</h3>
     <pre id="details"></pre>
   </div>
 
@@ -163,25 +105,23 @@ function send() {
   const input = document.getElementById("msg");
   const chat = document.getElementById("chat");
 
-  const text = input.value.trim();
+  const text = input.value;
   if (!text) return;
 
-  chat.innerHTML += `<div class="msg user">${text}</div>`;
+  chat.innerHTML += "<div class='msg user'>" + text + "</div>";
   input.value = "";
 
   fetch(SERVER + "/chat", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ session: "ui", message: text })
+    body: JSON.stringify({ message: text })
   })
-  .then(res => res.json())
-  .then(data => {
-    chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
+  .then(r => r.json())
+  .then(d => {
+    chat.innerHTML += "<div class='msg bot'>" + d.reply + "</div>";
   });
 }
 
-/* EVENTS */
 setInterval(() => {
   fetch(SERVER + "/events")
   .then(r => r.json())
@@ -191,766 +131,17 @@ setInterval(() => {
 
     events.slice(-5).forEach(e => {
       const el = document.createElement("div");
-      el.className = "alert";
-      el.innerText = `${e.namespace}/${e.name} → ${e.reason}`;
-
+      el.innerText = e.name + " → " + e.reason;
       el.onclick = () => {
         document.getElementById("details").innerText =
           JSON.stringify(e, null, 2);
       };
-
       box.appendChild(el);
     });
 
-    document.getElementById("status").innerText = "Cluster: Connected";
+    document.getElementById("status").innerText = "Connected";
   });
 }, 3000);
-</script>
-
-</body>
-</html>
-/* MOBILE */
-@media (max-width: 900px) {
-  .container {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .chat-box {
-    height: 50vh;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  <h2>⚡ KDebug AI</h2>
-  <span>Cluster: Connected</span>
-</div>
-
-<div class="container">
-
-  <!-- ALERTS -->
-  <div class="panel">
-    <h3>🚨 Alerts</h3>
-    <div id="alerts"></div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="panel">
-    <h3>🤖 SRE Assistant</h3>
-
-    <div class="quick-actions">
-      <button onclick="quick('list pods')">Pods</button>
-      <button onclick="quick('debug')">Debug</button>
-      <button onclick="quick('fix')">Fix</button>
-    </div>
-
-    <div id="chat" class="chat-box"></div>
-
-    <div class="input-box">
-      <input id="msg" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-  <!-- DETAILS -->
-  <div class="panel">
-    <h3>🔍 Resource Details</h3>
-    <pre id="details"></pre>
-  </div>
-
-</div>
-
-<script>
-const SERVER = "http://<KDEBUG-SVC-FQDN>";
-
-/* ---------------- ALERTS ---------------- */
-async function loadAlerts() {
-  try {
-    const res = await fetch(SERVER + "/events");
-    const data = await res.json();
-
-    const alertsDiv = document.getElementById("alerts");
-    alertsDiv.innerHTML = "";
-
-    data.forEach(a => {
-      const div = document.createElement("div");
-      div.className = "alert";
-
-      // severity color
-      if (a.reason.includes("BackOff")) div.style.background = "#78350f";
-
-      div.innerText = `${a.type} | ${a.namespace}/${a.name} → ${a.reason}`;
-
-      div.onclick = () => {
-        document.getElementById("details").innerText =
-          JSON.stringify(a, null, 2);
-
-        // auto debug on click
-        document.getElementById("msg").value =
-          `debug ${a.type} ${a.name} in ${a.namespace}`;
-        send();
-      };
-
-      alertsDiv.appendChild(div);
-    });
-
-  } catch (e) {}
-}
-
-setInterval(loadAlerts, 3000);
-
-/* ---------------- CHAT ---------------- */
-async function send() {
-  const input = document.getElementById("msg");
-  const chat = document.getElementById("chat");
-
-  const text = input.value.trim();
-  if (!text) return;
-
-  // user message
-  const userDiv = document.createElement("div");
-  userDiv.className = "msg user";
-  userDiv.innerText = "> " + text;
-  chat.appendChild(userDiv);
-
-  input.value = "";
-
-  try {
-    const res = await fetch(SERVER + "/chat", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "ui",
-        message: text
-      })
-    });
-
-    const data = await res.json();
-
-    // AI message SAFE (no HTML injection)
-    const aiDiv = document.createElement("div");
-    aiDiv.className = "msg ai";
-    aiDiv.innerText = data.reply;
-    chat.appendChild(aiDiv);
-
-    chat.scrollTop = chat.scrollHeight;
-
-  } catch (e) {
-    const errDiv = document.createElement("div");
-    errDiv.className = "msg ai";
-    errDiv.innerText = "❌ Server error";
-    chat.appendChild(errDiv);
-  }
-}
-
-/* ---------------- QUICK ---------------- */
-function quick(cmd) {
-  document.getElementById("msg").value = cmd;
-  send();
-}
-</script>
-
-</body>
-</html>  padding: 10px;
-  background: #22c55e;
-  border: none;
-  cursor: pointer;
-}
-
-/* MOBILE */
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">
-  <h2>⚡ KDebug AI</h2>
-  <span>Cluster: Connected</span>
-</div>
-
-<div class="status">
-  <div class="card">Nodes: OK</div>
-  <div class="card">Pods: --</div>
-  <div class="card">Deployments</div>
-  <div class="card">PVC</div>
-</div>
-
-<div class="container">
-
-  <!-- ALERTS -->
-  <div class="panel">
-    <h3>🚨 Alerts</h3>
-    <div id="alerts"></div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="panel">
-    <h3>🤖 SRE Assistant</h3>
-    <div id="chat" class="chat-box"></div>
-
-    <div class="input-box">
-      <input id="msg" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-  <!-- DETAILS -->
-  <div class="panel">
-    <h3>🔍 Resource Details</h3>
-    <pre id="details"></pre>
-  </div>
-
-</div>
-
-<script>
-const SERVER = "http://<KDEBUG-SVC-FQDN>";
-
-/* ---------------- ALERTS ---------------- */
-async function loadAlerts() {
-  try {
-    const res = await fetch(SERVER + "/events");
-    const data = await res.json();
-
-    const alertsDiv = document.getElementById("alerts");
-    alertsDiv.innerHTML = ""; // 🔥 FIX DUPLICATE ISSUE
-
-    data.forEach(a => {
-      const div = document.createElement("div");
-      div.className = "alert";
-      div.innerText = `${a.type} | ${a.namespace}/${a.name} → ${a.reason}`;
-
-      div.onclick = () => {
-        document.getElementById("details").innerText =
-          JSON.stringify(a, null, 2);
-      };
-
-      alertsDiv.appendChild(div);
-    });
-  } catch (e) {}
-}
-
-setInterval(loadAlerts, 3000);
-
-/* ---------------- CHAT ---------------- */
-async function send() {
-  const input = document.getElementById("msg");
-  const chat = document.getElementById("chat");
-
-  const text = input.value.trim();
-  if (!text) return;
-
-  chat.innerHTML += `<div class="msg user">> ${text}</div>`;
-  input.value = "";
-
-  try {
-    const res = await fetch(SERVER + "/chat", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "ui",
-        message: text
-      })
-    });
-
-    const data = await res.json();
-
-    chat.innerHTML += `<div class="msg ai">${data.reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
-
-  } catch (e) {
-    chat.innerHTML += `<div class="msg ai">❌ Server error</div>`;
-  }
-}
-</script>
-
-</body>
-</html>    .alert {
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .card {
-      background: #161b22;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-
-    pre {
-      white-space: pre-wrap;
-      font-size: 12px;
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- 🔝 METRICS -->
-<div id="topbar">
-  <div class="tile green">Nodes: OK</div>
-  <div class="tile red" id="podCount">Pods: --</div>
-  <div class="tile yellow">Deployments</div>
-  <div class="tile">PVC</div>
-</div>
-
-<!-- MAIN -->
-<div id="main">
-
-  <!-- 🚨 ALERTS -->
-  <div id="alerts">
-    <h3>🚨 Alerts</h3>
-    <div id="alertList"></div>
-  </div>
-
-  <!-- 💬 CHAT -->
-  <div id="chat">
-    <div id="messages"></div>
-
-    <div id="inputBox">
-      <input id="input" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-  <!-- 📄 DETAILS -->
-  <div id="details">
-    <h3>🔍 Resource Details</h3>
-    <div id="resource"></div>
-  </div>
-
-</div>
-
-<script>
-const SERVER = window.KDEBUG_SERVER || "http://kdebug-backend:5000";
-const seen = new Set();
-
-// -----------------------------
-// 💬 CHAT
-// -----------------------------
-function addMessage(text, cls) {
-  const div = document.createElement("div");
-  div.className = "msg " + cls;
-  div.innerText = text;
-  document.getElementById("messages").appendChild(div);
-}
-
-async function send() {
-  const input = document.getElementById("input");
-  const text = input.value;
-
-  if (!text) return;
-
-  addMessage("You: " + text, "user");
-  input.value = "";
-
-  try {
-    const res = await fetch(`${SERVER}/chat`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "web",
-        message: text
-      })
-    });
-
-    const data = await res.json();
-
-    addMessage("AI: " + data.reply, "bot");
-
-    // 🔧 Auto detect fix suggestion
-    if (data.reply.toLowerCase().includes("fix")) {
-      addFixButton();
-    }
-
-  } catch (err) {
-    addMessage("⚠️ Server error", "bot");
-  }
-}
-
-// ENTER KEY
-document.getElementById("input").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") send();
-});
-
-// -----------------------------
-// 🔧 FIX BUTTON
-// -----------------------------
-function addFixButton() {
-  const div = document.createElement("div");
-
-  div.innerHTML = `
-    <button onclick="applyFix()">Apply Fix</button>
-  `;
-
-  document.getElementById("messages").appendChild(div);
-}
-
-async function applyFix() {
-  addMessage("Applying fix...", "bot");
-
-  try {
-    const res = await fetch(`${SERVER}/chat`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "web",
-        message: "yes"
-      })
-    });
-
-    const data = await res.json();
-
-    addMessage(data.reply, "bot");
-
-  } catch {
-    addMessage("Fix failed", "bot");
-  }
-}
-
-// -----------------------------
-// 🚨 ALERTS
-// -----------------------------
-async function watchAlerts() {
-  try {
-    const res = await fetch(`${SERVER}/events`);
-    const data = await res.json();
-
-    document.getElementById("podCount").innerText = "Pods: " + data.length;
-
-    data.forEach(e => {
-      const key = `${e.type}-${e.namespace}-${e.name}-${e.reason}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-
-        const div = document.createElement("div");
-        div.className = "alert red";
-
-        div.innerText = `[${e.type}] ${e.namespace}/${e.name}`;
-
-        // click = debug
-        div.onclick = () => debugResource(e);
-
-        document.getElementById("alertList").prepend(div);
-      }
-    });
-
-  } catch {}
-}
-
-setInterval(watchAlerts, 3000);
-
-// -----------------------------
-// 🔍 RESOURCE DEBUG
-// -----------------------------
-async function debugResource(e) {
-  addMessage(`debug ${e.type} ${e.name}`, "user");
-
-  try {
-    const res = await fetch(`${SERVER}/chat`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "web",
-        message: `debug ${e.type} ${e.name} in ${e.namespace}`
-      })
-    });
-
-    const data = await res.json();
-
-    addMessage(data.reply, "bot");
-
-    document.getElementById("resource").innerHTML = `
-      <div class="card">
-        <pre>${data.reply}</pre>
-        <button onclick="applyFix()">Apply Fix</button>
-      </div>
-    `;
-
-  } catch {}
-}
-</script>
-
-</body>
-</html>    .alert {
-      margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .card {
-      background: #161b22;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-
-    pre {
-      white-space: pre-wrap;
-      font-size: 12px;
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- 🔝 METRICS -->
-<div id="topbar">
-  <div class="tile green">Nodes: OK</div>
-  <div class="tile red" id="podCount">Pods: --</div>
-  <div class="tile yellow">Deployments</div>
-  <div class="tile">PVC</div>
-</div>
-
-<!-- MAIN -->
-<div id="main">
-
-  <!-- 🚨 ALERTS -->
-  <div id="alerts">
-    <h3>🚨 Alerts</h3>
-    <div id="alertList"></div>
-  </div>
-
-  <!-- 💬 CHAT -->
-  <div id="chat">
-    <div id="messages"></div>
-
-    <div id="inputBox">
-      <input id="input" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-  <!-- 📄 DETAILS -->
-  <div id="details">
-    <h3>🔍 Resource Details</h3>
-    <div id="resource"></div>
-  </div>
-
-</div>
-
-<script>
-const SERVER = window.KDEBUG_SERVER || "http://kdebug-backend:5000";
-const seen = new Set();
-
-// -----------------------------
-// 💬 CHAT
-// -----------------------------
-function addMessage(text, cls) {
-  const div = document.createElement("div");
-  div.className = "msg " + cls;
-  div.innerText = text;
-  document.getElementById("messages").appendChild(div);
-}
-
-async function send() {
-  const input = document.getElementById("input");
-  const text = input.value;
-
-  if (!text) return;
-
-  addMessage("You: " + text, "user");
-  input.value = "";
-
-  try {
-    const res = await fetch(`${SERVER}/chat`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "web",
-        message: text
-      })
-    });
-
-    const data = await res.json();
-
-    addMessage("AI: " + data.reply, "bot");
-
-    // 🔧 Auto detect fix suggestion
-    if (data.reply.toLowerCase().includes("fix")) {
-      addFixButton();
-    }
-
-  } catch (err) {
-    addMessage("⚠️ Server error", "bot");
-  }
-}
-
-// ENTER KEY
-document.getElementById("input").addEventListener("keypress", function(e) {
-  <style>
-    body {
-      margin: 0;
-      font-family: monospace;
-      background: #0d1117;
-      color: #c9d1d9;
-      display: flex;
-      height: 100vh;
-    }
-
-    #alerts {
-      width: 30%;
-      border-right: 1px solid #30363d;
-      padding: 10px;
-      overflow-y: auto;
-    }
-
-    #chat {
-      width: 70%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-    }
-
-    .msg {
-      margin-bottom: 10px;
-    }
-
-    .user {
-      color: #58a6ff;
-    }
-
-    .bot {
-      color: #7ee787;
-    }
-
-    #inputBox {
-      display: flex;
-      border-top: 1px solid #30363d;
-    }
-
-    input {
-      flex: 1;
-      padding: 10px;
-      background: #0d1117;
-      border: none;
-      color: white;
-    }
-
-    button {
-      background: #238636;
-      border: none;
-      padding: 10px;
-      color: white;
-      cursor: pointer;
-    }
-
-    .alert {
-      color: #ff7b72;
-      margin-bottom: 8px;
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- 🚨 ALERT PANEL -->
-  <div id="alerts">
-    <h3>🚨 Cluster Alerts</h3>
-    <div id="alertList"></div>
-  </div>
-
-  <!-- 💬 CHAT PANEL -->
-  <div id="chat">
-    <div id="messages"></div>
-
-    <div id="inputBox">
-      <input id="input" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
-  </div>
-
-<script>
-const SERVER = window.KDEBUG_SERVER || "http://kdebug-backend:5000";
-const seen = new Set();
-
-// -----------------------------
-// 💬 CHAT
-// -----------------------------
-function addMessage(text, cls) {
-  const div = document.createElement("div");
-  div.className = "msg " + cls;
-  if (e.key === "Enter") send();
-});
-  div.innerText = text;
-  document.getElementById("messages").appendChild(div);
-}
-
-async function send() {
-  const input = document.getElementById("input");
-  const text = input.value;
-
-  if (!text) return;
-
-  addMessage("You: " + text, "user");
-  input.value = "";
-
-  try {
-    const res = await fetch(`${SERVER}/chat`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session: "web",
-        message: text
-      })
-    });
-
-    const data = await res.json();
-
-    addMessage("AI: " + data.reply, "bot");
-  } catch (err) {
-    addMessage("⚠️ Error connecting to server", "bot");
-  }
-}
-
-// enter key support
-document.getElementById("input").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") send();
-});
-
-
-// -----------------------------
-// 🚨 ALERT WATCHER
-// -----------------------------
-async function watchAlerts() {
-  try {
-    const res = await fetch(`${SERVER}/events`);
-    const data = await res.json();
-
-    data.forEach(e => {
-      const key = `${e.type}-${e.namespace}-${e.name}-${e.reason}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-
-        const div = document.createElement("div");
-        div.className = "alert";
-        div.innerText = `[${e.type}] ${e.namespace}/${e.name} → ${e.reason}`;
-
-        document.getElementById("alertList").prepend(div);
-      }
-    });
-
-  } catch (err) {
-    console.log("Watcher error");
-  }
-}
-
-setInterval(watchAlerts, 3000);
-
 </script>
 
 </body>
