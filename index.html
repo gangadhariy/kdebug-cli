@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,30 +8,59 @@
 <style>
 body {
   margin: 0;
+  font-family: Arial, sans-serif;
   background: #0b1220;
-  color: white;
-  font-family: Arial;
+  color: #e2e8f0;
 }
 
+/* HEADER */
 .header {
-  padding: 10px;
+  padding: 12px;
   background: #111827;
+  border-bottom: 1px solid #1f2937;
   display: flex;
   justify-content: space-between;
+  font-size: 14px;
 }
 
+/* GRID */
 .container {
   display: grid;
-  grid-template-columns: 250px 1fr 300px;
-  height: calc(100vh - 40px);
+  grid-template-columns: 260px 1fr 300px;
+  height: calc(100vh - 50px);
 }
 
+/* PANELS */
 .panel {
   border-right: 1px solid #1f2937;
   padding: 10px;
   overflow-y: auto;
 }
 
+.panel:last-child {
+  border-right: none;
+}
+
+.panel h3 {
+  margin-top: 0;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* ALERT */
+.alert {
+  background: #1e293b;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.alert:hover {
+  background: #334155;
+}
+
+/* CHAT */
 .chat {
   display: flex;
   flex-direction: column;
@@ -44,26 +73,51 @@ body {
 }
 
 .msg {
-  padding: 6px;
+  padding: 8px;
   margin-bottom: 6px;
+  border-radius: 6px;
 }
 
-.user { background: #2563eb; }
-.bot { background: #1e293b; }
+.user {
+  background: #2563eb;
+  align-self: flex-end;
+}
 
+.bot {
+  background: #1e293b;
+}
+
+/* INPUT */
 .input-box {
   display: flex;
+  margin-top: 10px;
 }
 
 input {
   flex: 1;
-  padding: 6px;
+  padding: 8px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  color: white;
 }
 
 button {
-  background: green;
-  color: white;
+  padding: 8px 12px;
+  background: #22c55e;
   border: none;
+  cursor: pointer;
+}
+
+/* MOBILE FIX */
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    border-right: none;
+    border-bottom: 1px solid #1f2937;
+  }
 }
 </style>
 </head>
@@ -71,28 +125,32 @@ button {
 <body>
 
 <div class="header">
-  KDebug AI
-  <span id="status">Connecting...</span>
+  ⚡ KDebug AI
+  <span id="status">Cluster: Connecting...</span>
 </div>
 
 <div class="container">
 
+  <!-- ALERTS -->
   <div class="panel">
-    <h3>Alerts</h3>
+    <h3>🚨 Alerts</h3>
     <div id="alerts"></div>
   </div>
 
+  <!-- CHAT -->
   <div class="panel chat">
+    <h3>🤖 SRE Assistant</h3>
     <div id="chat" class="messages"></div>
 
     <div class="input-box">
-      <input id="msg">
+      <input id="msg" placeholder="Ask SRE AI..." />
       <button onclick="send()">Send</button>
     </div>
   </div>
 
+  <!-- DETAILS -->
   <div class="panel">
-    <h3>Details</h3>
+    <h3>🔍 Resource Details</h3>
     <pre id="details"></pre>
   </div>
 
@@ -105,23 +163,25 @@ function send() {
   const input = document.getElementById("msg");
   const chat = document.getElementById("chat");
 
-  const text = input.value;
+  const text = input.value.trim();
   if (!text) return;
 
-  chat.innerHTML += "<div class='msg user'>" + text + "</div>";
+  chat.innerHTML += `<div class="msg user">${text}</div>`;
   input.value = "";
 
   fetch(SERVER + "/chat", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ message: text })
+    body: JSON.stringify({ session: "ui", message: text })
   })
-  .then(r => r.json())
-  .then(d => {
-    chat.innerHTML += "<div class='msg bot'>" + d.reply + "</div>";
+  .then(res => res.json())
+  .then(data => {
+    chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+    chat.scrollTop = chat.scrollHeight;
   });
 }
 
+/* EVENTS */
 setInterval(() => {
   fetch(SERVER + "/events")
   .then(r => r.json())
@@ -131,15 +191,18 @@ setInterval(() => {
 
     events.slice(-5).forEach(e => {
       const el = document.createElement("div");
-      el.innerText = e.name + " → " + e.reason;
+      el.className = "alert";
+      el.innerText = `${e.namespace}/${e.name} → ${e.reason}`;
+
       el.onclick = () => {
         document.getElementById("details").innerText =
           JSON.stringify(e, null, 2);
       };
+
       box.appendChild(el);
     });
 
-    document.getElementById("status").innerText = "Connected";
+    document.getElementById("status").innerText = "Cluster: Connected";
   });
 }, 3000);
 </script>
