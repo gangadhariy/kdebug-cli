@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KDebug AI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      display: flex;
+      height: 100vh;
+    }
+
+    #alerts {
+      width: 30%;
+      border-right: 1px solid #30363d;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    #chat {
+      width: 70%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+    }
+
+    .user {
+      color: #58a6ff;
+    }
+
+    .bot {
+      color: #7ee787;
+    }
+
+    #inputBox {
+      display: flex;
+      border-top: 1px solid #30363d;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      background: #0d1117;
+      border: none;
+      color: white;
+    }
+
+    button {
+      background: #238636;
+      border: none;
+      padding: 10px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .alert {
+      color: #ff7b72;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 🚨 ALERT PANEL -->
+  <div id="alerts">
+    <h3>🚨 Cluster Alerts</h3>
+    <div id="alertList"></div>
+  </div>
+
+  <!-- 💬 CHAT PANEL -->
+  <div id="chat">
+    <div id="messages"></div>
+
+    <div id="inputBox">
+      <input id="input" placeholder="Ask SRE AI..." />
+      <button onclick="send()">Send</button>
+    </div>
+  </div>
+
+<script>
+const SERVER = window.KDEBUG_SERVER || "http://kdebug-backend:5000";
+const seen = new Set();
+
+// -----------------------------
+// 💬 CHAT
+// -----------------------------
+function addMessage(text, cls) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerText = text;
+  document.getElementById("messages").appendChild(div);
+}
+
+async function send() {
+  const input = document.getElementById("input");
+  const text = input.value;
+
+  if (!text) return;
+
+  addMessage("You: " + text, "user");
+  input.value = "";
+
+  try {
+    const res = await fetch(`${SERVER}/chat`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        session: "web",
+        message: text
+      })
+    });
+
+    const data = await res.json();
+
+    addMessage("AI: " + data.reply, "bot");
+  } catch (err) {
+    addMessage("⚠️ Error connecting to server", "bot");
+  }
+}
+
+// enter key support
+document.getElementById("input").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") send();
+});
+
+
+// -----------------------------
+// 🚨 ALERT WATCHER
+// -----------------------------
+async function watchAlerts() {
+  try {
+    const res = await fetch(`${SERVER}/events`);
+    const data = await res.json();
+
+    data.forEach(e => {
+      const key = `${e.type}-${e.namespace}-${e.name}-${e.reason}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+
+        const div = document.createElement("div");
+        div.className = "alert";
+        div.innerText = `[${e.type}] ${e.namespace}/${e.name} → ${e.reason}`;
+
+        document.getElementById("alertList").prepend(div);
+      }
+    });
+
+  } catch (err) {
+    console.log("Watcher error");
+  }
+}
+
+setInterval(watchAlerts, 3000);
+
+</script>
+
+</body>
+</html>
