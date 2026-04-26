@@ -29,7 +29,7 @@ body {
   height: calc(100vh - 50px);
 }
 
-/* LEFT PANEL SPLIT */
+/* LEFT PANEL */
 .left-panel {
   display: flex;
   flex-direction: column;
@@ -48,6 +48,9 @@ body {
 }
 
 .chat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 6px;
   background: #1e293b;
   margin-bottom: 5px;
@@ -57,6 +60,21 @@ body {
 
 .chat-item:hover {
   background: #334155;
+}
+
+.chat-name {
+  flex: 1;
+}
+
+.delete-btn {
+  display: none;
+  color: #ef4444;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.chat-item:hover .delete-btn {
+  display: inline;
 }
 
 .new-chat {
@@ -88,7 +106,7 @@ body {
   background: #334155;
 }
 
-/* CHAT */
+/* CHAT PANEL */
 .chat-panel {
   display: flex;
   flex-direction: column;
@@ -170,13 +188,11 @@ button {
   <!-- LEFT PANEL -->
   <div class="left-panel">
 
-    <!-- CHAT LIST -->
     <div class="chat-section">
       <button class="new-chat" onclick="createChat()">➕ New Chat</button>
       <div id="chatList" class="chat-list"></div>
     </div>
 
-    <!-- ALERTS -->
     <div class="alert-section">
       <h4>🚨 Alerts</h4>
       <div id="alerts"></div>
@@ -184,7 +200,7 @@ button {
 
   </div>
 
-  <!-- CHAT PANEL -->
+  <!-- CHAT -->
   <div class="chat-panel">
     <h3>🤖 SRE Assistant</h3>
 
@@ -209,7 +225,7 @@ const SERVER = "http://YOUR_KDEBUG_SVC";
 
 let currentChat = "chat-1";
 
-/* CHAT MANAGEMENT */
+/* LOAD CHAT LIST */
 function loadChats() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const list = document.getElementById("chatList");
@@ -218,7 +234,11 @@ function loadChats() {
   Object.keys(chats).forEach(id => {
     const el = document.createElement("div");
     el.className = "chat-item";
-    el.innerText = id;
+
+    el.innerHTML = `
+      <span class="chat-name">${id}</span>
+      <span class="delete-btn" onclick="deleteChat(event, '${id}')">🗑</span>
+    `;
 
     el.onclick = () => {
       currentChat = id;
@@ -229,6 +249,7 @@ function loadChats() {
   });
 }
 
+/* CREATE CHAT */
 function createChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const id = "chat-" + (Object.keys(chats).length + 1);
@@ -241,6 +262,27 @@ function createChat() {
   renderChat();
 }
 
+/* DELETE CHAT */
+function deleteChat(event, id) {
+  event.stopPropagation();
+
+  let chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
+
+  if (Object.keys(chats).length === 1) {
+    alert("Cannot delete last chat");
+    return;
+  }
+
+  delete chats[id];
+  localStorage.setItem("kdebug_chats", JSON.stringify(chats));
+
+  currentChat = Object.keys(chats)[0];
+
+  loadChats();
+  renderChat();
+}
+
+/* RENDER */
 function renderChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const chatBox = document.getElementById("chat");
@@ -294,7 +336,7 @@ document.getElementById("msg").addEventListener("keypress", e => {
   if (e.key === "Enter") send();
 });
 
-/* EVENTS + STATUS */
+/* EVENTS */
 setInterval(() => {
   if (SERVER.includes("YOUR_KDEBUG_SVC")) {
     document.getElementById("status").innerText = "🟡 Not Configured";
