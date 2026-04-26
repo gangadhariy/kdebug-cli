@@ -70,22 +70,51 @@ body {
 .messages {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
+/* CHAT ROW */
+.msg-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+/* ALIGNMENT */
+.msg-row.user {
+  justify-content: flex-end;
+}
+
+.msg-row.bot {
+  justify-content: flex-start;
+}
+
+/* MESSAGE BUBBLE */
 .msg {
-  padding: 8px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  max-width: 80%;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+  word-wrap: break-word;
+  font-size: 13px;
 }
 
-.user {
+/* USER */
+.msg.user {
   background: #2563eb;
-  align-self: flex-end;
+  color: white;
+  border-bottom-right-radius: 2px;
 }
 
-.bot {
+/* BOT */
+.msg.bot {
   background: #1e293b;
+  border-bottom-left-radius: 2px;
+}
+
+/* ERROR */
+.msg.error {
+  background: #7f1d1d;
+  color: #fecaca;
 }
 
 /* INPUT */
@@ -160,9 +189,7 @@ button {
 <script>
 const SERVER = "http://YOUR_KDEBUG_SVC";
 
-/* -----------------------------
-   💾 LOAD CHAT
------------------------------ */
+/* LOAD CHAT */
 window.onload = () => {
   const saved = localStorage.getItem("kdebug_chat");
   if (saved) {
@@ -170,27 +197,37 @@ window.onload = () => {
   }
 };
 
-/* -----------------------------
-   💾 SAVE CHAT
------------------------------ */
+/* SAVE CHAT */
 function saveChat() {
-  const chat = document.getElementById("chat").innerHTML;
-  localStorage.setItem("kdebug_chat", chat);
+  localStorage.setItem("kdebug_chat", document.getElementById("chat").innerHTML);
 }
 
-/* -----------------------------
-   💬 SEND MESSAGE
------------------------------ */
-function send() {
-  const input = document.getElementById("msg");
+/* ADD MESSAGE */
+function addMessage(text, type="bot") {
   const chat = document.getElementById("chat");
 
+  const row = document.createElement("div");
+  row.className = "msg-row " + type;
+
+  const msg = document.createElement("div");
+  msg.className = "msg " + type;
+  msg.innerText = text;
+
+  row.appendChild(msg);
+  chat.appendChild(row);
+
+  chat.scrollTop = chat.scrollHeight;
+  saveChat();
+}
+
+/* SEND */
+function send() {
+  const input = document.getElementById("msg");
   const text = input.value.trim();
   if (!text) return;
 
-  chat.innerHTML += `<div class="msg user">${text}</div>`;
+  addMessage(text, "user");
   input.value = "";
-  saveChat();
 
   fetch(SERVER + "/chat", {
     method: "POST",
@@ -199,28 +236,23 @@ function send() {
   })
   .then(res => res.json())
   .then(data => {
-    chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-    chat.scrollTop = chat.scrollHeight;
-    saveChat();
+    addMessage(data.reply, "bot");
   })
   .catch(() => {
-    chat.innerHTML += `<div class="msg bot">❌ Backend unreachable</div>`;
-    saveChat();
+    addMessage("❌ Backend unreachable", "error");
   });
 }
 
 /* ENTER KEY */
-document.getElementById("msg").addEventListener("keypress", function(e) {
+document.getElementById("msg").addEventListener("keypress", e => {
   if (e.key === "Enter") send();
 });
 
-/* -----------------------------
-   🔔 STATUS + EVENTS
------------------------------ */
+/* EVENTS + STATUS */
 setInterval(() => {
   fetch(SERVER + "/events")
   .then(r => {
-    if (!r.ok) throw new Error("backend_down");
+    if (!r.ok) throw new Error();
     return r.json();
   })
   .then(events => {
@@ -240,19 +272,15 @@ setInterval(() => {
       box.appendChild(el);
     });
 
-    // 🟢 SUCCESS
     const status = document.getElementById("status");
     status.innerText = "🟢 Cluster: Connected";
     status.style.color = "lightgreen";
   })
-  .catch((err) => {
+  .catch(() => {
     const status = document.getElementById("status");
-
-    // 🔴 Backend unreachable (wrong URL / svc not exposed)
     status.innerText = "🔴 Backend Unreachable";
     status.style.color = "red";
   });
-
 }, 3000);
 </script>
 
