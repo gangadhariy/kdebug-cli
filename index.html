@@ -20,7 +20,6 @@ body {
   border-bottom: 1px solid #1f2937;
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
 }
 
 /* GRID */
@@ -30,39 +29,22 @@ body {
   height: calc(100vh - 50px);
 }
 
-/* PANELS */
-.panel {
+/* LEFT PANEL SPLIT */
+.left-panel {
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid #1f2937;
+}
+
+/* CHAT SECTION */
+.chat-section {
   padding: 10px;
-  overflow-y: auto;
+  border-bottom: 1px solid #1f2937;
 }
 
-.panel:last-child {
-  border-right: none;
-}
-
-.panel h3 {
-  margin-top: 0;
-  font-size: 14px;
-  color: #94a3b8;
-}
-
-/* ALERT */
-.alert {
-  background: #1e293b;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.alert:hover {
-  background: #334155;
-}
-
-/* CHAT LIST */
 .chat-list {
-  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .chat-item {
@@ -77,32 +59,58 @@ body {
   background: #334155;
 }
 
+.new-chat {
+  width: 100%;
+  margin-bottom: 10px;
+  background: #2563eb;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ALERT SECTION */
+.alert-section {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.alert {
+  background: #1e293b;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.alert:hover {
+  background: #334155;
+}
+
 /* CHAT */
-.chat {
+.chat-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  padding: 10px;
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
 }
 
-/* MESSAGE STYLES */
+/* MESSAGE */
 .msg {
   max-width: 70%;
   padding: 10px;
   margin-bottom: 8px;
   border-radius: 10px;
-  word-wrap: break-word;
 }
 
 .user {
   background: #2563eb;
   margin-left: auto;
-  text-align: right;
 }
 
 .bot {
@@ -126,29 +134,25 @@ input {
 }
 
 button {
-  padding: 10px 14px;
+  padding: 10px;
+  margin-left: 5px;
   background: #22c55e;
   border: none;
-  cursor: pointer;
-  margin-left: 5px;
   border-radius: 6px;
+  cursor: pointer;
 }
 
-.new-chat {
-  width: 100%;
-  margin-top: 10px;
-  background: #2563eb;
+/* DETAILS */
+.details-panel {
+  border-left: 1px solid #1f2937;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 /* MOBILE */
 @media (max-width: 900px) {
   .container {
     grid-template-columns: 1fr;
-  }
-
-  .panel {
-    border-right: none;
-    border-bottom: 1px solid #1f2937;
   }
 }
 </style>
@@ -158,24 +162,32 @@ button {
 
 <div class="header">
   ⚡ KDebug AI
-  <span id="status">🟡 Cluster: Checking...</span>
+  <span id="status">🟡 Checking...</span>
 </div>
 
 <div class="container">
 
   <!-- LEFT PANEL -->
-  <div class="panel">
-    <h3>🚨 Alerts</h3>
-    <div id="alerts"></div>
+  <div class="left-panel">
 
-    <button class="new-chat" onclick="createChat()">➕ New Chat</button>
+    <!-- CHAT LIST -->
+    <div class="chat-section">
+      <button class="new-chat" onclick="createChat()">➕ New Chat</button>
+      <div id="chatList" class="chat-list"></div>
+    </div>
 
-    <div class="chat-list" id="chatList"></div>
+    <!-- ALERTS -->
+    <div class="alert-section">
+      <h4>🚨 Alerts</h4>
+      <div id="alerts"></div>
+    </div>
+
   </div>
 
-  <!-- CHAT -->
-  <div class="panel chat">
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
     <h3>🤖 SRE Assistant</h3>
+
     <div id="chat" class="messages"></div>
 
     <div class="input-box">
@@ -185,7 +197,7 @@ button {
   </div>
 
   <!-- DETAILS -->
-  <div class="panel">
+  <div class="details-panel">
     <h3>🔍 Resource Details</h3>
     <pre id="details"></pre>
   </div>
@@ -195,14 +207,11 @@ button {
 <script>
 const SERVER = "http://YOUR_KDEBUG_SVC";
 
-/* -----------------------------
-   🧠 CHAT MANAGEMENT
------------------------------ */
 let currentChat = "chat-1";
 
+/* CHAT MANAGEMENT */
 function loadChats() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
-
   const list = document.getElementById("chatList");
   list.innerHTML = "";
 
@@ -235,17 +244,16 @@ function createChat() {
 function renderChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const chatBox = document.getElementById("chat");
-
   chatBox.innerHTML = "";
 
   (chats[currentChat] || []).forEach(m => {
     chatBox.innerHTML += `<div class="msg ${m.type}">${m.text}</div>`;
   });
+
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-/* -----------------------------
-   💬 SEND MESSAGE
------------------------------ */
+/* SEND */
 function send() {
   const input = document.getElementById("msg");
   const text = input.value.trim();
@@ -254,8 +262,8 @@ function send() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
 
   chats[currentChat].push({ type: "user", text });
-
   input.value = "";
+
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
   renderChat();
 
@@ -267,7 +275,6 @@ function send() {
   .then(res => res.json())
   .then(data => {
     const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
-
     chats[currentChat].push({ type: "bot", text: data.reply });
 
     localStorage.setItem("kdebug_chats", JSON.stringify(chats));
@@ -275,7 +282,6 @@ function send() {
   })
   .catch(() => {
     const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
-
     chats[currentChat].push({ type: "bot", text: "❌ Server unreachable" });
 
     localStorage.setItem("kdebug_chats", JSON.stringify(chats));
@@ -283,14 +289,12 @@ function send() {
   });
 }
 
-/* ENTER KEY */
+/* ENTER */
 document.getElementById("msg").addEventListener("keypress", e => {
   if (e.key === "Enter") send();
 });
 
-/* -----------------------------
-   🔔 EVENTS + STATUS
------------------------------ */
+/* EVENTS + STATUS */
 setInterval(() => {
   if (SERVER.includes("YOUR_KDEBUG_SVC")) {
     document.getElementById("status").innerText = "🟡 Not Configured";
@@ -319,12 +323,10 @@ setInterval(() => {
       box.appendChild(el);
     });
 
-    const status = document.getElementById("status");
-    status.innerText = "🟢 Cluster Connected";
+    document.getElementById("status").innerText = "🟢 Connected";
   })
   .catch(() => {
-    const status = document.getElementById("status");
-    status.innerText = "🔴 Cluster Disconnected";
+    document.getElementById("status").innerText = "🔴 Disconnected";
   });
 }, 3000);
 
