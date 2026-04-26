@@ -76,6 +76,7 @@ body {
   padding: 8px;
   margin-bottom: 6px;
   border-radius: 6px;
+  max-width: 80%;
 }
 
 .user {
@@ -108,7 +109,7 @@ button {
   cursor: pointer;
 }
 
-/* MOBILE FIX */
+/* MOBILE */
 @media (max-width: 900px) {
   .container {
     grid-template-columns: 1fr;
@@ -126,7 +127,7 @@ button {
 
 <div class="header">
   ⚡ KDebug AI
-  <span id="status" style="color: orange;">Cluster: Connecting...</span>
+  <span id="status" style="color: orange;">🟡 Connecting...</span>
 </div>
 
 <div class="container">
@@ -160,7 +161,7 @@ button {
 const SERVER = "http://YOUR_KDEBUG_SVC";
 
 /* -----------------------------
-   💾 LOAD CHAT FROM STORAGE
+   💾 LOAD CHAT
 ----------------------------- */
 window.onload = () => {
   const saved = localStorage.getItem("kdebug_chat");
@@ -203,25 +204,23 @@ function send() {
     saveChat();
   })
   .catch(() => {
-    chat.innerHTML += `<div class="msg bot">❌ Failed to reach server</div>`;
+    chat.innerHTML += `<div class="msg bot">❌ Backend unreachable</div>`;
     saveChat();
   });
 }
 
-/* ENTER KEY SUPPORT */
+/* ENTER KEY */
 document.getElementById("msg").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    send();
-  }
+  if (e.key === "Enter") send();
 });
 
 /* -----------------------------
-   🔔 EVENTS + CONNECTION CHECK
+   🔔 STATUS + EVENTS
 ----------------------------- */
 setInterval(() => {
   fetch(SERVER + "/events")
   .then(r => {
-    if (!r.ok) throw new Error("fail");
+    if (!r.ok) throw new Error("backend_down");
     return r.json();
   })
   .then(events => {
@@ -241,15 +240,19 @@ setInterval(() => {
       box.appendChild(el);
     });
 
+    // 🟢 SUCCESS
     const status = document.getElementById("status");
     status.innerText = "🟢 Cluster: Connected";
     status.style.color = "lightgreen";
   })
-  .catch(() => {
+  .catch((err) => {
     const status = document.getElementById("status");
-    status.innerText = "🔴 Cluster: Disconnected";
+
+    // 🔴 Backend unreachable (wrong URL / svc not exposed)
+    status.innerText = "🔴 Backend Unreachable";
     status.style.color = "red";
   });
+
 }, 3000);
 </script>
 
