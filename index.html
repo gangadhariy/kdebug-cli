@@ -36,7 +36,7 @@ body {
   border-right: 1px solid #1f2937;
 }
 
-/* CHAT SECTION */
+/* CHAT LIST */
 .chat-section {
   padding: 10px;
   border-bottom: 1px solid #1f2937;
@@ -50,7 +50,6 @@ body {
 .chat-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 6px;
   background: #1e293b;
   margin-bottom: 5px;
@@ -62,15 +61,10 @@ body {
   background: #334155;
 }
 
-.chat-name {
-  flex: 1;
-}
-
 .delete-btn {
   display: none;
   color: #ef4444;
   cursor: pointer;
-  margin-left: 8px;
 }
 
 .chat-item:hover .delete-btn {
@@ -87,7 +81,7 @@ body {
   cursor: pointer;
 }
 
-/* ALERT SECTION */
+/* ALERTS */
 .alert-section {
   flex: 1;
   padding: 10px;
@@ -99,11 +93,15 @@ body {
   padding: 8px;
   margin-bottom: 8px;
   border-radius: 6px;
-  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
 }
 
-.alert:hover {
-  background: #334155;
+.alert button {
+  background: transparent;
+  color: red;
+  border: none;
+  cursor: pointer;
 }
 
 /* CHAT PANEL */
@@ -111,6 +109,8 @@ body {
   display: flex;
   flex-direction: column;
   padding: 10px;
+  height: 100%;
+  overflow: hidden;
 }
 
 .messages {
@@ -124,6 +124,8 @@ body {
   padding: 10px;
   margin-bottom: 8px;
   border-radius: 10px;
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 
 .user {
@@ -140,6 +142,9 @@ body {
 .input-box {
   display: flex;
   margin-top: 10px;
+  position: sticky;
+  bottom: 0;
+  background: #0b1220;
 }
 
 input {
@@ -185,7 +190,7 @@ button {
 
 <div class="container">
 
-  <!-- LEFT PANEL -->
+  <!-- LEFT -->
   <div class="left-panel">
 
     <div class="chat-section">
@@ -221,9 +226,13 @@ button {
 </div>
 
 <script>
-const SERVER = "http://YOUR_KDEBUG_SVC";
-
+const SERVER = window.location.origin;
 let currentChat = "chat-1";
+
+/* FORMAT OUTPUT */
+function formatMessage(text) {
+  return text;
+}
 
 /* LOAD CHAT LIST */
 function loadChats() {
@@ -236,8 +245,8 @@ function loadChats() {
     el.className = "chat-item";
 
     el.innerHTML = `
-      <span class="chat-name">${id}</span>
-      <span class="delete-btn" onclick="deleteChat(event, '${id}')">🗑</span>
+      <span>${id}</span>
+      <span class="delete-btn" onclick="deleteChat(event,'${id}')">🗑</span>
     `;
 
     el.onclick = () => {
@@ -253,7 +262,6 @@ function loadChats() {
 function createChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const id = "chat-" + (Object.keys(chats).length + 1);
-
   chats[id] = [];
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
 
@@ -263,36 +271,37 @@ function createChat() {
 }
 
 /* DELETE CHAT */
-function deleteChat(event, id) {
-  event.stopPropagation();
-
+function deleteChat(e, id) {
+  e.stopPropagation();
   let chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
 
-  if (Object.keys(chats).length === 1) {
-    alert("Cannot delete last chat");
-    return;
-  }
+  if (Object.keys(chats).length === 1) return alert("Cannot delete last chat");
 
   delete chats[id];
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
 
   currentChat = Object.keys(chats)[0];
-
   loadChats();
   renderChat();
 }
 
-/* RENDER */
+/* RENDER CHAT */
 function renderChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const chatBox = document.getElementById("chat");
+
+  const isAtBottom =
+    chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 50;
+
   chatBox.innerHTML = "";
 
   (chats[currentChat] || []).forEach(m => {
-    chatBox.innerHTML += `<div class="msg ${m.type}">${m.text}</div>`;
+    chatBox.innerHTML += `<div class="msg ${m.type}">${formatMessage(m.text)}</div>`;
   });
 
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (isAtBottom) {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 }
 
 /* SEND */
@@ -305,7 +314,6 @@ function send() {
 
   chats[currentChat].push({ type: "user", text });
   input.value = "";
-
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
   renderChat();
 
@@ -318,36 +326,29 @@ function send() {
   .then(data => {
     const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
     chats[currentChat].push({ type: "bot", text: data.reply });
-
     localStorage.setItem("kdebug_chats", JSON.stringify(chats));
     renderChat();
   })
   .catch(() => {
     const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
     chats[currentChat].push({ type: "bot", text: "❌ Server unreachable" });
-
     localStorage.setItem("kdebug_chats", JSON.stringify(chats));
     renderChat();
   });
 }
 
-/* ENTER */
-document.getElementById("msg").addEventListener("keypress", e => {
-  if (e.key === "Enter") send();
+/* ENTER KEY */
+document.getElementById("msg").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    send();
+  }
 });
 
 /* EVENTS */
 setInterval(() => {
-  if (SERVER.includes("YOUR_KDEBUG_SVC")) {
-    document.getElementById("status").innerText = "🟡 Not Configured";
-    return;
-  }
-
   fetch(SERVER + "/events")
-  .then(r => {
-    if (!r.ok) throw new Error();
-    return r.json();
-  })
+  .then(r => r.json())
   .then(events => {
     const box = document.getElementById("alerts");
     box.innerHTML = "";
@@ -355,7 +356,11 @@ setInterval(() => {
     events.slice(-5).forEach(e => {
       const el = document.createElement("div");
       el.className = "alert";
-      el.innerText = `${e.namespace}/${e.name} → ${e.reason}`;
+
+      el.innerHTML = `
+        <span>${e.namespace}/${e.name} → ${e.reason}</span>
+        <button onclick="this.parentElement.remove()">✖</button>
+      `;
 
       el.onclick = () => {
         document.getElementById("details").innerText =
