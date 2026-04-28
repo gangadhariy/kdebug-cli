@@ -5,80 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KDebug AI</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0b1220;
-  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #eef2ff, #e5e7eb);
+  color: #111827;
 }
 
 /* HEADER */
 .header {
-  padding: 12px;
-  background: #111827;
-  border-bottom: 1px solid #1f2937;
+  padding: 14px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #d1d5db;
   display: flex;
   justify-content: space-between;
+  font-weight: 600;
 }
 
 /* GRID */
 .container {
   display: grid;
-  grid-template-columns: 260px 1fr 300px;
-  height: calc(100vh - 50px);
+  grid-template-columns: 260px 1fr 320px;
+  height: calc(100vh - 55px);
+  overflow: hidden; /* 🔥 FIX */
 }
 
-/* LEFT PANEL */
+/* PANELS */
+.left-panel, .chat-panel, .details-panel {
+  backdrop-filter: blur(10px);
+}
+
+/* LEFT */
 .left-panel {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #1f2937;
+  border-right: 1px solid #d1d5db;
 }
 
 /* CHAT LIST */
 .chat-section {
   padding: 10px;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.new-chat {
+  width: 100%;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .chat-list {
   max-height: 200px;
   overflow-y: auto;
+  margin-top: 10px;
 }
 
 .chat-item {
   display: flex;
   justify-content: space-between;
   padding: 6px;
-  background: #1e293b;
+  background: rgba(255,255,255,0.7);
   margin-bottom: 5px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-}
-
-.chat-item:hover {
-  background: #334155;
 }
 
 .delete-btn {
   display: none;
-  color: #ef4444;
-  cursor: pointer;
+  color: red;
 }
 
 .chat-item:hover .delete-btn {
   display: inline;
-}
-
-.new-chat {
-  width: 100%;
-  margin-bottom: 10px;
-  background: #2563eb;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
 /* ALERTS */
@@ -89,18 +95,20 @@ body {
 }
 
 .alert {
-  background: #1e293b;
-  padding: 8px;
+  background: white;
+  padding: 10px;
   margin-bottom: 8px;
-  border-radius: 6px;
+  border-radius: 10px;
+  border-left: 4px solid orange;
   display: flex;
   justify-content: space-between;
+  cursor: pointer;
 }
 
 .alert button {
-  background: transparent;
-  color: red;
+  background: none;
   border: none;
+  color: red;
   cursor: pointer;
 }
 
@@ -110,73 +118,93 @@ body {
   flex-direction: column;
   padding: 10px;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* 🔥 FIX */
 }
 
+/* MESSAGES */
 .messages {
   flex: 1;
   overflow-y: auto;
+  min-height: 0; /* 🔥 FIX */
+  scroll-behavior: smooth;
+  padding-right: 5px;
 }
 
-/* MESSAGE */
-.msg {
-  max-width: 70%;
-  padding: 10px;
-  margin-bottom: 8px;
+/* SCROLLBAR */
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+.messages::-webkit-scrollbar-thumb {
+  background: #9ca3af;
   border-radius: 10px;
-  white-space: pre-wrap;
-  font-family: monospace;
+}
+
+/* MSG */
+.msg {
+  max-width: 75%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  font-size: 13px;
 }
 
 .user {
-  background: #2563eb;
+  background: linear-gradient(135deg, #6366f1, #3b82f6);
+  color: white;
   margin-left: auto;
 }
 
 .bot {
-  background: #1e293b;
-  margin-right: auto;
+  background: white;
+  border: 1px solid #d1d5db;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+td, th {
+  padding: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  color: #4f46e5;
+  text-align: left;
 }
 
 /* INPUT */
 .input-box {
   display: flex;
   margin-top: 10px;
-  position: sticky;
-  bottom: 0;
-  background: #0b1220;
 }
 
 input {
   flex: 1;
   padding: 10px;
-  background: #111827;
-  border: 1px solid #1f2937;
-  color: white;
-  border-radius: 6px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
 }
 
 button {
-  padding: 10px;
   margin-left: 5px;
-  background: #22c55e;
+  padding: 10px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
+  color: white;
 }
 
 /* DETAILS */
 .details-panel {
-  border-left: 1px solid #1f2937;
+  border-left: 1px solid #d1d5db;
   padding: 10px;
   overflow-y: auto;
-}
-
-/* MOBILE */
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
+  white-space: pre-wrap;
 }
 </style>
 </head>
@@ -190,38 +218,32 @@ button {
 
 <div class="container">
 
-  <!-- LEFT -->
-  <div class="left-panel">
-
-    <div class="chat-section">
-      <button class="new-chat" onclick="createChat()">➕ New Chat</button>
-      <div id="chatList" class="chat-list"></div>
-    </div>
-
-    <div class="alert-section">
-      <h4>🚨 Alerts</h4>
-      <div id="alerts"></div>
-    </div>
-
+<div class="left-panel">
+  <div class="chat-section">
+    <button class="new-chat" onclick="createChat()">➕ New Chat</button>
+    <div id="chatList" class="chat-list"></div>
   </div>
 
-  <!-- CHAT -->
-  <div class="chat-panel">
-    <h3>🤖 SRE Assistant</h3>
-
-    <div id="chat" class="messages"></div>
-
-    <div class="input-box">
-      <input id="msg" placeholder="Ask SRE AI..." />
-      <button onclick="send()">Send</button>
-    </div>
+  <div class="alert-section">
+    <h4>🚨 Alerts</h4>
+    <div id="alerts"></div>
   </div>
+</div>
 
-  <!-- DETAILS -->
-  <div class="details-panel">
-    <h3>🔍 Resource Details</h3>
-    <pre id="details"></pre>
+<div class="chat-panel">
+  <h3>🤖 SRE Assistant</h3>
+  <div id="chat" class="messages"></div>
+
+  <div class="input-box">
+    <input id="msg" placeholder="Ask SRE AI..." />
+    <button onclick="send()">Send</button>
   </div>
+</div>
+
+<div class="details-panel">
+  <h3>🔍 Resource Details</h3>
+  <pre id="details"></pre>
+</div>
 
 </div>
 
@@ -231,10 +253,27 @@ let currentChat = "chat-1";
 
 /* FORMAT OUTPUT */
 function formatMessage(text) {
-  return text;
+  const lines = text.trim().split("\n");
+
+  if (lines.length > 1 && lines[0].includes("NAME")) {
+    const rows = lines.map(line => line.trim().split(/\s{2,}/));
+
+    let html = "<table>";
+    rows.forEach((row, i) => {
+      html += "<tr>";
+      row.forEach(col => {
+        html += i === 0 ? `<th>${col}</th>` : `<td>${col}</td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</table>";
+    return html;
+  }
+
+  return `<pre>${text}</pre>`;
 }
 
-/* LOAD CHAT LIST */
+/* CHAT */
 function loadChats() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const list = document.getElementById("chatList");
@@ -258,19 +297,16 @@ function loadChats() {
   });
 }
 
-/* CREATE CHAT */
 function createChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const id = "chat-" + (Object.keys(chats).length + 1);
   chats[id] = [];
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
-
   currentChat = id;
   loadChats();
   renderChat();
 }
 
-/* DELETE CHAT */
 function deleteChat(e, id) {
   e.stopPropagation();
   let chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
@@ -279,18 +315,17 @@ function deleteChat(e, id) {
 
   delete chats[id];
   localStorage.setItem("kdebug_chats", JSON.stringify(chats));
-
   currentChat = Object.keys(chats)[0];
   loadChats();
   renderChat();
 }
 
-/* RENDER CHAT */
+/* SCROLL FIX */
 function renderChat() {
   const chats = JSON.parse(localStorage.getItem("kdebug_chats") || "{}");
   const chatBox = document.getElementById("chat");
 
-  const isAtBottom =
+  const atBottom =
     chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 50;
 
   chatBox.innerHTML = "";
@@ -299,7 +334,7 @@ function renderChat() {
     chatBox.innerHTML += `<div class="msg ${m.type}">${formatMessage(m.text)}</div>`;
   });
 
-  if (isAtBottom) {
+  if (atBottom) {
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 }
@@ -337,7 +372,7 @@ function send() {
   });
 }
 
-/* ENTER KEY */
+/* ENTER */
 document.getElementById("msg").addEventListener("keydown", e => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -359,7 +394,7 @@ setInterval(() => {
 
       el.innerHTML = `
         <span>${e.namespace}/${e.name} → ${e.reason}</span>
-        <button onclick="this.parentElement.remove()">✖</button>
+        <button onclick="event.stopPropagation(); this.parentElement.remove()">✖</button>
       `;
 
       el.onclick = () => {
@@ -382,7 +417,6 @@ window.onload = () => {
   if (!localStorage.getItem("kdebug_chats")) {
     localStorage.setItem("kdebug_chats", JSON.stringify({ "chat-1": [] }));
   }
-
   loadChats();
   renderChat();
 };
